@@ -61,7 +61,7 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
               ),
               child: ListTile(
                 onLongPress: (){ deleteToDo(index); },
-                onTap: (){openDialog();},
+                onTap: (){openDialog(todoList[index].toDoTitle,ind:index,isDone: todoList[index].isDone);},
                 title: Text(todoList[index].toDoTitle),
                 trailing: Checkbox(
                     checkColor: Colors.white,
@@ -78,7 +78,7 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {openDialog();},
+        onPressed: () {openDialog("");},
         tooltip: 'Increment',
         backgroundColor: Colors.green,
         child:const Icon(Icons.add),
@@ -87,10 +87,10 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
     );
   }
 
-  TextEditingController _controller = TextEditingController();
+  TextEditingController _controller = TextEditingController(text: "");
   
-  void openDialog() { 
-    _controller = TextEditingController();
+void openDialog(String txt, {int ind = -1,bool isDone = false}) { 
+    _controller = TextEditingController(text: txt);
     showDialog(
     context: context,
     builder: (context) => AlertDialog(
@@ -104,13 +104,19 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
         ),
         controller: _controller,
       ),
-      actions: [
-        TextButton(
-          onPressed: () { addToDo(_controller.text);},
-          child: const Text("Add",style: TextStyle(color: Colors.green)))
-      ],
-    )
-  );
+        actions: [
+          TextButton(
+           onPressed: () {
+            if(txt=="") {
+              addToDo(_controller.text);
+            } else {
+              editToDo(_controller.text, ind,isDone);
+            }
+           },
+            child: const Text("Add",style: TextStyle(color: Colors.green)))
+        ],
+      )
+    );
   }
 
 
@@ -125,6 +131,14 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
     setState(() {
       todoList.removeAt(index);
     });
+  }
+
+  editToDo(String text,int index,bool isDone){
+    setState(() {
+        todoList.removeAt(index);
+        todoList.add(ToDoItem(toDoTitle: text, isDone: isDone));
+    });
+    Navigator.of(context).pop();
   }
 
 }
