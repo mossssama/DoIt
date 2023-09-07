@@ -62,14 +62,21 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
               child: ListTile(
                 onLongPress: (){ deleteToDo(index); },
                 onTap: (){openDialog(todoList[index].toDoTitle,ind:index,isDone: todoList[index].isDone);},
-                title: Text(todoList[index].toDoTitle),
+                title: Text(
+                  todoList[index].toDoTitle,
+                  style: TextStyle(decoration: todoList[index].isDone? TextDecoration.lineThrough: TextDecoration.none,
+                  decorationThickness: 3.0, // Adjust the thickness as needed
+                  decorationColor: Colors.black, // Line color
+                  ),
+                ),
                 trailing: Checkbox(
-                    checkColor: Colors.white,
-                    activeColor: Colors.green,
-                    value: todoList[index].isDone,
-                    onChanged: (value) {
-                      onCheck(todoList, index, value);
-                    }),
+                  checkColor: Colors.white,
+                  activeColor: Colors.green,
+                  value: todoList[index].isDone,
+                  onChanged: (value) {
+                    onCheck(todoList, index, value);
+                  }
+                ),
               ),
             ),
           );
