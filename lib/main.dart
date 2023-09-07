@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:to_do/todo.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:to_do/todo_status.dart';
 import 'boxes.dart';
 
 Future<void> main() async { 
@@ -12,7 +13,7 @@ Future<void> main() async {
 }
 
 ValueNotifier<List<Todo>> todoListNotifier = ValueNotifier<List<Todo>>([]);
-ValueNotifier<int> completedTasksCountNotifier = ValueNotifier<int>(0);
+ValueNotifier<TasksStatus> tasksStatusNotifier = ValueNotifier<TasksStatus>(TasksStatus(0, 0),);
 
 class ToDoApp extends StatelessWidget {
   const ToDoApp({super.key});
@@ -21,6 +22,7 @@ class ToDoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       home: ToDoHomePage(title: 'Daily ToDo'),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -42,9 +44,16 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
     super.initState();
     todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
 
+    int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
+    int totalTasks = todoListNotifier.value.length;
+    tasksStatusNotifier.value = TasksStatus(completedTasks, totalTasks);
+
     toDosBox.watch().listen((event) {
       todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
-      updateCompletedTasksCount();
+
+      int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
+      int totalTasks = todoListNotifier.value.length;
+      tasksStatusNotifier.value = TasksStatus(completedTasks, totalTasks);
     });
   }
 
@@ -62,11 +71,12 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
               style: const TextStyle(color: Colors.black),
             ),
             const SizedBox(width: 100),
-        ValueListenableBuilder<int>(
-          valueListenable: completedTasksCountNotifier,
-          builder: (context, completedTasks, child) {
+
+        ValueListenableBuilder<TasksStatus>(
+          valueListenable: tasksStatusNotifier,
+          builder: (context, tasksStatus, child) {
             return Text(
-              '$completedTasks/${todoListNotifier.value.length}',
+              getTasksStatusText(tasksStatus.completedTasks, tasksStatus.totalTasks),
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
@@ -76,7 +86,7 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
           },
         )
 
-          ],
+        ],
         ),
         centerTitle: false,
       )
@@ -163,11 +173,22 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
   
   void addToDo(String text) async {
     await toDosBox.add(Todo(toDoTitle: text, isDone: false)); // Add the newTodo to the Hive Box
+    todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
+
+    int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
+    int totalTasks = todoListNotifier.value.length;
+    tasksStatusNotifier.value = TasksStatus(completedTasks, totalTasks);
+
   }
 
 
   void deleteToDo(int index) async {
     await toDosBox.deleteAt(index); // Remove the Todo from the Hive Box
+     todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
+
+    int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
+    int totalTasks = todoListNotifier.value.length;
+    tasksStatusNotifier.value = TasksStatus(completedTasks, totalTasks);
   }
 
 
@@ -176,15 +197,14 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
   }
 
 
-  void updateCompletedTasksCount() {
-    int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
-    completedTasksCountNotifier.value = completedTasks;
-  }
-
-  // String getTasksStatusText() {
-  //   return '${completedTasksCountNotifier.value}/${todoListNotifier.value.length}';
+  // void updateCompletedTasksCount() {
+  //   int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
+  //   completedTasksCountNotifier.value = completedTasks;
   // }
 
+  String getTasksStatusText(int completedTasks,int totalTasks){
+    return '$completedTasks/$totalTasks';
+  }
 
   void onCheck(int index, bool? value) {
     final todo = todoListNotifier.value[index];
