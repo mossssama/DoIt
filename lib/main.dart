@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:to_do/to_do_item.dart';
+import 'package:to_do/todo.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'boxes.dart';
 
-void main() => runApp(const ToDoApp());
+Future<void> main() async { 
+  await Hive.initFlutter();
+  Hive.registerAdapter(TodoAdapter());
+  toDosBox = await Hive.openBox('toDosBox');
+  
+  runApp(const ToDoApp());
+}
+
+ValueNotifier<List<Todo>> todoListNotifier = ValueNotifier<List<Todo>>([]);
+ValueNotifier<int> completedTasksCountNotifier = ValueNotifier<int>(0);
 
 class ToDoApp extends StatelessWidget {
   const ToDoApp({super.key});
@@ -14,6 +25,7 @@ class ToDoApp extends StatelessWidget {
   }
 }
 
+
 class ToDoHomePage extends StatefulWidget {
   const ToDoHomePage({super.key, required this.title});
   final String title;
@@ -23,14 +35,19 @@ class ToDoHomePage extends StatefulWidget {
 }
 
 class _ToDoHomePageState extends State<ToDoHomePage> {
+  TextEditingController _controller = TextEditingController(text: "");
 
-  List<ToDoItem> todoList = [
-    ToDoItem(toDoTitle: 'Task 0', isDone: true),
-    ToDoItem(toDoTitle: 'Task 1', isDone: false),
-    ToDoItem(toDoTitle: 'Task 2', isDone: true),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
 
-    TextEditingController _controller = TextEditingController(text: "");
+    toDosBox.watch().listen((event) {
+      todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
+      updateCompletedTasksCount();
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -45,52 +62,63 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
               style: const TextStyle(color: Colors.black),
             ),
             const SizedBox(width: 100),
-            Text(
-              getTasksStatusText(),
+        ValueListenableBuilder<int>(
+          valueListenable: completedTasksCountNotifier,
+          builder: (context, completedTasks, child) {
+            return Text(
+              '$completedTasks/${todoListNotifier.value.length}',
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
-            ),
+            );
+          },
+        )
+
           ],
         ),
         centerTitle: false,
       )
 
       ,
-      body: ListView.builder(
-        itemCount: todoList.length, // specify the total number of items
-        itemBuilder: (BuildContext context, int index) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.yellow[500],
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: ListTile(
-                onLongPress: (){ deleteToDo(index); },
-                onTap: (){openDialog(todoList[index].toDoTitle,ind:index,isDone: todoList[index].isDone);},
-                title: Text(
-                  todoList[index].toDoTitle,
-                  style: TextStyle(decoration: todoList[index].isDone? TextDecoration.lineThrough: TextDecoration.none,
-                  decorationThickness: 3.0, // Adjust the thickness as needed
-                  decorationColor: Colors.black, // Line color
+      body: ValueListenableBuilder<List<Todo>>(
+        valueListenable: todoListNotifier,
+        builder:  (context, todos, child) {
+          return ListView.builder(
+            itemCount: todoListNotifier.value.length, // specify the total number of items
+            itemBuilder: (BuildContext context, int index) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.yellow[500],
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: ListTile(
+                    onLongPress: (){ deleteToDo(index); },
+                    onTap: (){openDialog(todoListNotifier.value[index].toDoTitle,ind:index,isDone: todoListNotifier.value[index].isDone);},
+                    title: Text(
+                      todoListNotifier.value[index].toDoTitle,
+                      style: TextStyle(decoration: todoListNotifier.value[index].isDone? TextDecoration.lineThrough: TextDecoration.none,
+                      decorationThickness: 3.0, // Adjust the thickness as needed
+                      decorationColor: Colors.black, // Line color
+                      ),
+                    ),
+                    trailing: Checkbox(
+                      checkColor: Colors.white,
+                      activeColor: Colors.green,
+                      value: todoListNotifier.value[index].isDone,
+                      onChanged: (value) {
+                        onCheck(index, value);
+                      }
+                    ),
                   ),
                 ),
-                trailing: Checkbox(
-                  checkColor: Colors.white,
-                  activeColor: Colors.green,
-                  value: todoList[index].isDone,
-                  onChanged: (value) {
-                    onCheck(todoList, index, value);
-                  }
-                ),
-              ),
-            ),
+              );
+            },
           );
-        },
+        }
       ),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -104,7 +132,7 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
     );
   }
 
-  
+
   void openDialog(String txt, {int ind = -1,bool isDone = false}) { 
     _controller = TextEditingController(text: txt);
     showDialog(
@@ -123,52 +151,45 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
         actions: [
           TextButton(
            onPressed: () {
-            if(txt=="") {
-              addToDo(_controller.text);
-            } else {
-              editToDo(_controller.text, ind,isDone);
-            }
+            if(txt=="") { addToDo(_controller.text); }
+            else { editToDo(_controller.text, ind,isDone); }
+            Navigator.of(context).pop();
            },
             child: const Text("Add",style: TextStyle(color: Colors.green)))
         ],
       )
     );
   }
-
-
-  void addToDo(String text) {
-    setState((){
-        todoList.add(ToDoItem(toDoTitle: text, isDone: false));
-    });
-    Navigator.of(context).pop();
-  }
   
-  void deleteToDo(int index) {
-    setState(() {
-      todoList.removeAt(index);
-    });
-  }
-
-  void editToDo(String text,int index,bool isDone){
-    setState(() {
-        todoList.removeAt(index);
-        todoList.add(ToDoItem(toDoTitle: text, isDone: isDone));
-    });
-    Navigator.of(context).pop();
+  void addToDo(String text) async {
+    await toDosBox.add(Todo(toDoTitle: text, isDone: false)); // Add the newTodo to the Hive Box
   }
 
 
-  String getTasksStatusText() {
-    int completedTasks = todoList.where((item) => item.isDone).length;
-    int totalTasks = todoList.length;
-    return '$completedTasks/$totalTasks';
+  void deleteToDo(int index) async {
+    await toDosBox.deleteAt(index); // Remove the Todo from the Hive Box
   }
 
 
-  void onCheck(List<ToDoItem> todoList, int index, bool? value) {
-    setState(() {
-      todoList[index].isDone = value!;
-    });
+  void editToDo(String text,int index,bool isDone)async{
+    await toDosBox.putAt(index, Todo(toDoTitle: text, isDone: isDone));
+  }
+
+
+  void updateCompletedTasksCount() {
+    int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
+    completedTasksCountNotifier.value = completedTasks;
+  }
+
+  // String getTasksStatusText() {
+  //   return '${completedTasksCountNotifier.value}/${todoListNotifier.value.length}';
+  // }
+
+
+  void onCheck(int index, bool? value) {
+    final todo = todoListNotifier.value[index];
+    todo.isDone = value!;
+    toDosBox.putAt(index, todo);
   }
 
 
