@@ -23,22 +23,14 @@ class ToDoHomePage extends StatefulWidget {
 }
 
 class _ToDoHomePageState extends State<ToDoHomePage> {
+
   List<ToDoItem> todoList = [
     ToDoItem(toDoTitle: 'Task 0', isDone: true),
     ToDoItem(toDoTitle: 'Task 1', isDone: false),
     ToDoItem(toDoTitle: 'Task 2', isDone: true),
   ];
 
-  String getTasksStatusText() {
-    int completedTasks = todoList.where((item) => item.isDone).length;
-    int totalTasks = todoList.length;
-    return '$completedTasks/$totalTasks';
-  }
-  void onCheck(List<ToDoItem> todoList, int index, bool? value) {
-    setState(() {
-      todoList[index].isDone = value!;
-    });
-  }
+    TextEditingController _controller = TextEditingController(text: "");
 
   @override
   Widget build(BuildContext context) {
@@ -112,9 +104,8 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
     );
   }
 
-  TextEditingController _controller = TextEditingController(text: "");
   
-void openDialog(String txt, {int ind = -1,bool isDone = false}) { 
+  void openDialog(String txt, {int ind = -1,bool isDone = false}) { 
     _controller = TextEditingController(text: txt);
     showDialog(
     context: context,
@@ -145,25 +136,40 @@ void openDialog(String txt, {int ind = -1,bool isDone = false}) {
   }
 
 
-  addToDo(String text) {
+  void addToDo(String text) {
     setState((){
         todoList.add(ToDoItem(toDoTitle: text, isDone: false));
     });
     Navigator.of(context).pop();
   }
   
-  deleteToDo(int index) {
+  void deleteToDo(int index) {
     setState(() {
       todoList.removeAt(index);
     });
   }
 
-  editToDo(String text,int index,bool isDone){
+  void editToDo(String text,int index,bool isDone){
     setState(() {
         todoList.removeAt(index);
         todoList.add(ToDoItem(toDoTitle: text, isDone: isDone));
     });
     Navigator.of(context).pop();
   }
+
+
+  String getTasksStatusText() {
+    int completedTasks = todoList.where((item) => item.isDone).length;
+    int totalTasks = todoList.length;
+    return '$completedTasks/$totalTasks';
+  }
+
+
+  void onCheck(List<ToDoItem> todoList, int index, bool? value) {
+    setState(() {
+      todoList[index].isDone = value!;
+    });
+  }
+
 
 }
