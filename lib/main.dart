@@ -29,7 +29,11 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
     ToDoItem(toDoTitle: 'Task 2', isDone: true),
   ];
 
-
+  String getTasksStatusText() {
+    int completedTasks = todoList.where((item) => item.isDone).length;
+    int totalTasks = todoList.length;
+    return '$completedTasks/$totalTasks';
+  }
   void onCheck(List<ToDoItem> todoList, int index, bool? value) {
     setState(() {
       todoList[index].isDone = value!;
@@ -39,16 +43,30 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
-      appBar: AppBar(
+        appBar: AppBar(
         backgroundColor: Colors.yellow[500],
-        title: Text(
-          widget.title,
-          style: const TextStyle(color: Colors.black),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              widget.title,
+              style: const TextStyle(color: Colors.black),
+            ),
+            const SizedBox(width: 100),
+            Text(
+              getTasksStatusText(),
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
         ),
-        centerTitle: true,
-      ),
+        centerTitle: false,
+      )
 
+      ,
       body: ListView.builder(
         itemCount: todoList.length, // specify the total number of items
         itemBuilder: (BuildContext context, int index) {
