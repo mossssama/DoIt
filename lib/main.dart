@@ -23,14 +23,10 @@ class ToDoHomePage extends StatefulWidget {
 }
 
 class _ToDoHomePageState extends State<ToDoHomePage> {
-  // int _counter = 0;
   List<ToDoItem> todoList = [
-    ToDoItem(toDoTitle: 'Task 0', isDone: false),
-    ToDoItem(toDoTitle: 'Task 1', isDone: true),
-    ToDoItem(toDoTitle: 'Task 2', isDone: false),
-    ToDoItem(toDoTitle: 'Task 3', isDone: true),
-    ToDoItem(toDoTitle: 'Task 4', isDone: false),
-    ToDoItem(toDoTitle: 'Task 5', isDone: true),
+    ToDoItem(toDoTitle: 'Task 0', isDone: true),
+    ToDoItem(toDoTitle: 'Task 1', isDone: false),
+    ToDoItem(toDoTitle: 'Task 2', isDone: true),
   ];
 
 
@@ -64,6 +60,8 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
                 borderRadius: BorderRadius.circular(10.0),
               ),
               child: ListTile(
+                onLongPress: (){ deleteToDo(index); },
+                onTap: (){openDialog();},
                 title: Text(todoList[index].toDoTitle),
                 trailing: Checkbox(
                     checkColor: Colors.white,
@@ -89,9 +87,11 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
     );
   }
 
-  final TextEditingController _controller = TextEditingController();
+  TextEditingController _controller = TextEditingController();
   
-  void openDialog() =>showDialog(
+  void openDialog() { 
+    _controller = TextEditingController();
+    showDialog(
     context: context,
     builder: (context) => AlertDialog(
       title: const Text("ToDo item"),
@@ -106,18 +106,25 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
       ),
       actions: [
         TextButton(
-          onPressed: () { submit(_controller.text);},
+          onPressed: () { addToDo(_controller.text);},
           child: const Text("Add",style: TextStyle(color: Colors.green)))
       ],
     )
   );
+  }
 
 
-  submit(String text) {
+  addToDo(String text) {
     setState((){
         todoList.add(ToDoItem(toDoTitle: text, isDone: false));
     });
     Navigator.of(context).pop();
+  }
+  
+  deleteToDo(int index) {
+    setState(() {
+      todoList.removeAt(index);
+    });
   }
 
 }
