@@ -43,17 +43,11 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
   void initState() {
     super.initState();
     todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
-
-    int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
-    int totalTasks = todoListNotifier.value.length;
-    tasksStatusNotifier.value = TasksStatus(completedTasks, totalTasks);
+    updateTasksCompletion();
 
     toDosBox.watch().listen((event) {
       todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
-
-      int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
-      int totalTasks = todoListNotifier.value.length;
-      tasksStatusNotifier.value = TasksStatus(completedTasks, totalTasks);
+      updateTasksCompletion();
     });
   }
 
@@ -172,35 +166,26 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
   }
   
   void addToDo(String text) async {
-    await toDosBox.add(Todo(toDoTitle: text, isDone: false)); // Add the newTodo to the Hive Box
+    await toDosBox.add(Todo(toDoTitle: text, isDone: false)); 
     todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
-
-    int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
-    int totalTasks = todoListNotifier.value.length;
-    tasksStatusNotifier.value = TasksStatus(completedTasks, totalTasks);
-
+    updateTasksCompletion();  
   }
-
 
   void deleteToDo(int index) async {
-    await toDosBox.deleteAt(index); // Remove the Todo from the Hive Box
-     todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
-
-    int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
-    int totalTasks = todoListNotifier.value.length;
-    tasksStatusNotifier.value = TasksStatus(completedTasks, totalTasks);
+    await toDosBox.deleteAt(index); 
+    todoListNotifier.value = toDosBox.values.toList().cast<Todo>();
+    updateTasksCompletion();
   }
-
 
   void editToDo(String text,int index,bool isDone)async{
     await toDosBox.putAt(index, Todo(toDoTitle: text, isDone: isDone));
   }
 
-
-  // void updateCompletedTasksCount() {
-  //   int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
-  //   completedTasksCountNotifier.value = completedTasks;
-  // }
+  void updateTasksCompletion() {
+    int completedTasks = todoListNotifier.value.where((item) => item.isDone).length;
+    int totalTasks = todoListNotifier.value.length;
+    tasksStatusNotifier.value = TasksStatus(completedTasks, totalTasks);
+  }
 
   String getTasksStatusText(int completedTasks,int totalTasks){
     return '$completedTasks/$totalTasks';
