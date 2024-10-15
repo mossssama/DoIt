@@ -6,7 +6,7 @@
 
 <h2>🚀 Download from here</h2>
 
-[https://play.google.com/store/apps/details?id=com.newOs.doIt](https://play.google.com/store/apps/details?id=com.newOs.doIt)
+[App link](https://www.amazon.in/mossssama-DoIt/dp/B0DGZXZXGW)
 
   
 <h2>🧐 Features</h2>
